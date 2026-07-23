@@ -24,9 +24,11 @@ class LiveOnMemberSiteClient:
         if not self.base_url:
             return None
         key = normalize_rsn(rsn)
-        cached_at, cached = self.cache.get(key, (0, None))
-        if time.monotonic() - cached_at < 300:
-            return cached
+        cached_entry = self.cache.get(key)
+        if cached_entry is not None:
+            cached_at, cached = cached_entry
+            if time.monotonic() - cached_at < 300:
+                return cached
 
         response = await self.client.get("/achievement/players", params={"search": rsn})
         response.raise_for_status()

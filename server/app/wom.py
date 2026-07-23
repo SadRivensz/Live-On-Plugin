@@ -17,7 +17,7 @@ class WiseOldManClient:
 
     def __init__(self, config: Settings):
         self.group_id = config.wom_group_id
-        headers = {"User-Agent": "Live-On-Clan/0.2.6"}
+        headers = {"User-Agent": "Live-On-Clan/0.2.7"}
         if config.wom_api_key:
             headers["x-api-key"] = config.wom_api_key
         self.client = httpx.AsyncClient(
@@ -25,7 +25,7 @@ class WiseOldManClient:
             headers=headers,
             timeout=httpx.Timeout(35, connect=10),
         )
-        self._member_cache: tuple[float, list[dict[str, Any]]] = (0, [])
+        self._member_cache: tuple[float, list[dict[str, Any]]] | None = None
         self._profile_cache: dict[str, tuple[float, dict[str, Any]]] = {}
         self._ranking_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
         self._profile_inflight: dict[str, asyncio.Task[dict[str, Any]]] = {}
@@ -38,13 +38,15 @@ class WiseOldManClient:
     async def members(self) -> list[dict[str, Any]]:
         if self.group_id <= 0:
             return []
-        cached_at, members = self._member_cache
-        if time.monotonic() - cached_at < 300 and members:
-            return members
-        async with self._cache_lock:
+        if self._member_cache is not None:
             cached_at, members = self._member_cache
-            if time.monotonic() - cached_at < 300 and members:
+            if time.monotonic() - cached_at < 300:
                 return members
+        async with self._cache_lock:
+            if self._member_cache is not None:
+                cached_at, members = self._member_cache
+                if time.monotonic() - cached_at < 300:
+                    return members
             response = await self.client.get(f"/groups/{self.group_id}")
             response.raise_for_status()
             payload = response.json()
@@ -75,13 +77,17 @@ class WiseOldManClient:
 
     async def player_profile(self, rsn: str) -> dict[str, Any]:
         key = normalize_rsn(rsn)
-        cached_at, cached = self._profile_cache.get(key, (0, {}))
-        if time.monotonic() - cached_at < 180 and cached:
-            return cached
-        async with self._cache_lock:
-            cached_at, cached = self._profile_cache.get(key, (0, {}))
-            if time.monotonic() - cached_at < 180 and cached:
+        cached_entry = self._profile_cache.get(key)
+        if cached_entry is not None:
+            cached_at, cached = cached_entry
+            if time.monotonic() - cached_at < 180:
                 return cached
+        async with self._cache_lock:
+            cached_entry = self._profile_cache.get(key)
+            if cached_entry is not None:
+                cached_at, cached = cached_entry
+                if time.monotonic() - cached_at < 180:
+                    return cached
             task = self._profile_inflight.get(key)
             if task is None:
                 task = asyncio.create_task(self._fetch_player_profile(rsn))
@@ -108,13 +114,17 @@ class WiseOldManClient:
         # every request a different cache key. Month start uniquely identifies
         # both current and previous monthly races.
         cache_key = f"{wom_metric}:{start.date().isoformat()}"
-        cached_at, cached_entries = self._ranking_cache.get(cache_key, (0, []))
-        if time.monotonic() - cached_at < 600 and cached_entries:
-            return cached_entries
-        async with self._cache_lock:
-            cached_at, cached_entries = self._ranking_cache.get(cache_key, (0, []))
-            if time.monotonic() - cached_at < 600 and cached_entries:
+        cached_entry = self._ranking_cache.get(cache_key)
+        if cached_entry is not None:
+            cached_at, cached_entries = cached_entry
+            if time.monotonic() - cached_at < 600:
                 return cached_entries
+        async with self._cache_lock:
+            cached_entry = self._ranking_cache.get(cache_key)
+            if cached_entry is not None:
+                cached_at, cached_entries = cached_entry
+                if time.monotonic() - cached_at < 600:
+                    return cached_entries
             task = self._ranking_inflight.get(cache_key)
             if task is None:
                 task = asyncio.create_task(self._fetch_rankings(wom_metric, start, end))

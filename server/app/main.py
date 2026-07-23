@@ -58,7 +58,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="Live On Clan API",
-    version="0.2.6",
+    version="0.2.7",
     description="Companion API for the Live On RuneLite plugin.",
     lifespan=lifespan,
 )
@@ -105,7 +105,7 @@ def require_staff(session: Session = Depends(require_session)) -> Session:
 
 @app.get("/")
 async def root() -> dict:
-    return {"name": "Live On Clan API", "version": "0.2.6", "docs": "/docs"}
+    return {"name": "Live On Clan API", "version": "0.2.7", "docs": "/docs"}
 
 
 @app.get("/health")

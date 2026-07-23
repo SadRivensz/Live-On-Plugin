@@ -125,7 +125,7 @@ public class LiveOnApiClient
             callback.onFailure("Imagem inválida");
             return;
         }
-        Request.Builder builder = new Request.Builder().url(url).get().header("User-Agent", "Live-On-RuneLite/0.2.6");
+        Request.Builder builder = new Request.Builder().url(url).get().header("User-Agent", "Live-On-RuneLite/0.2.7");
         httpClient.newCall(builder.build()).enqueue(new Callback()
         {
             @Override
@@ -306,7 +306,7 @@ public class LiveOnApiClient
             builder.header("Authorization", "Bearer " + token);
         }
 
-        builder.header("User-Agent", "Live-On-RuneLite/0.2.6");
+        builder.header("User-Agent", "Live-On-RuneLite/0.2.7");
         httpClient.newCall(builder.build()).enqueue(new Callback()
         {
             @Override

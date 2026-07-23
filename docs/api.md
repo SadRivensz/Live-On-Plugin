@@ -16,7 +16,7 @@ Authorization: Bearer <token>
   "clanName": "Live On",
   "clanRank": "member",
   "accessCode": "codigo-da-staff",
-  "pluginVersion": "0.2.6"
+  "pluginVersion": "0.2.7"
 }
 ```
 

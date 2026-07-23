@@ -1,5 +1,6 @@
 import asyncio
 import unittest
+from unittest import mock
 
 import httpx
 
@@ -34,7 +35,10 @@ class RuneProfileClientTest(unittest.TestCase):
             await client.close()
             return first, second
 
-        first, second = asyncio.run(run())
+        # Fresh Linux runners can have a monotonic clock below the cache TTL.
+        # A missing cache entry must never be mistaken for a recent entry.
+        with mock.patch("app.runeprofile.time.monotonic", return_value=1):
+            first, second = asyncio.run(run())
         self.assertEqual(1, requests)
         self.assertIs(first, second)
         self.assertEqual("https://runeprofile.com/Test%20Player", first["profileUrl"])

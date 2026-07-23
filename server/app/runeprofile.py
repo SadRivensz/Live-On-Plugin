@@ -17,7 +17,7 @@ class RuneProfileClient:
     CACHE_SECONDS = 120
 
     def __init__(self, config: Settings):
-        headers = {"User-Agent": "Live-On-Clan/0.2.6"}
+        headers = {"User-Agent": "Live-On-Clan/0.2.7"}
         if config.runeprofile_api_key:
             headers["X-API-Key"] = config.runeprofile_api_key
         self.client = httpx.AsyncClient(
@@ -34,14 +34,18 @@ class RuneProfileClient:
 
     async def full_profile(self, rsn: str) -> dict[str, Any] | None:
         key = normalize_rsn(rsn)
-        cached_at, cached = self._cache.get(key, (0, None))
-        if time.monotonic() - cached_at < self.CACHE_SECONDS:
-            return cached
-
-        async with self._lock:
-            cached_at, cached = self._cache.get(key, (0, None))
+        cached_entry = self._cache.get(key)
+        if cached_entry is not None:
+            cached_at, cached = cached_entry
             if time.monotonic() - cached_at < self.CACHE_SECONDS:
                 return cached
+
+        async with self._lock:
+            cached_entry = self._cache.get(key)
+            if cached_entry is not None:
+                cached_at, cached = cached_entry
+                if time.monotonic() - cached_at < self.CACHE_SECONDS:
+                    return cached
             task = self._inflight.get(key)
             if task is None:
                 task = asyncio.create_task(self._fetch_full_profile(rsn))
