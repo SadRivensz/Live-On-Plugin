@@ -1,12 +1,14 @@
-# Contrato da API
+# API contract
 
-Todas as rotas após `/v1/auth/verify` exigem:
+[English](api.md) | [Brazilian Portuguese](api.pt-BR.md)
+
+Every route after `/v1/auth/verify` requires:
 
 ```http
 Authorization: Bearer <token>
 ```
 
-## Autenticação
+## Authentication
 
 `POST /v1/auth/verify`
 
@@ -15,45 +17,46 @@ Authorization: Bearer <token>
   "rsn": "Player Name",
   "clanName": "Live On",
   "clanRank": "member",
-  "accessCode": "codigo-da-staff",
+  "accessCode": "staff-access-code",
   "pluginVersion": "0.2.7"
 }
 ```
 
-O servidor valida código, roster e staff. O token não é salvo em disco pelo
-plugin e expira por padrão em 12 horas.
+The server validates the access code, roster and staff status. The plugin does
+not persist the token to disk, and the token expires after 12 hours by default.
 
-## Eventos
+## Events
 
 - `POST /v1/drops`
 - `POST /v1/pets`
 - `POST /v1/collection-log`
 
-O backend é responsável por persistir e gerar embeds. Não aceite `webhookUrl`
-enviado pelo cliente. Drops podem incluir `screenshotBase64` (PNG/JPEG, até 7 MB
-depois de decodificado); o servidor salva a imagem em `data/screenshots`.
+The backend persists events and builds Discord embeds. Never accept a
+`webhookUrl` supplied by the client. Drops may include `screenshotBase64`
+(PNG/JPEG, up to 7 MB after decoding); the server stores the image in
+`data/screenshots`.
 
-## Leitura
+## Read operations
 
 - `GET /v1/announcements`
 - `GET /v1/drops?limit=25`
-- `GET /v1/members?query=nome`
-- `GET /v1/members/profile?rsn=nome`
-- `GET /v1/members/runeprofile?rsn=nome`
+- `GET /v1/members?query=name`
+- `GET /v1/members/profile?rsn=name`
+- `GET /v1/members/runeprofile?rsn=name`
 - `GET /v1/rankings?metric=xp&period=current`
 - `GET /v1/item-goal`
 
-Métricas: `xp`, `ehp`, `ehb`. Períodos: `current`, `previous`.
+Metrics: `xp`, `ehp`, `ehb`. Periods: `current`, `previous`.
 
-O RuneProfile é consultado separadamente do perfil WOM para que Skills,
-Bosses e Atividades apareçam sem aguardar o collection log completo. O endpoint
-retorna `404` quando não há perfil público e usa cache para respeitar o limite
-da API externa.
+RuneProfile is queried separately from the Wise Old Man profile so Skills,
+Bosses and Activities do not wait for the full Collection Log response. The
+endpoint returns `404` when no public profile exists and caches responses to
+respect the external API rate limit.
 
-## Item desejado
+## Item goal
 
-- `PUT /v1/item-goal` marca ou substitui o objetivo ativo do usuário.
-- `DELETE /v1/item-goal` remove o objetivo ativo.
+- `PUT /v1/item-goal` creates or replaces the user's active goal.
+- `DELETE /v1/item-goal` removes the active goal.
 
 ```json
 {
@@ -62,17 +65,18 @@ da API externa.
 }
 ```
 
-Quando um drop contém o ID ou nome marcado, o servidor conclui o objetivo,
-calcula o tempo de busca e cria um anúncio `item_goal` para todos os membros.
+When a drop contains the selected item ID or name, the server completes the
+goal, calculates the hunt duration and creates an `item_goal` announcement for
+all members.
 
 ## Staff
 
-`POST /v1/announcements` exige token com `staff=true`.
+`POST /v1/announcements` requires a token with `staff=true`.
 
 ```json
 {
-  "title": "Evento de sábado",
-  "message": "Encontro no GE às 20h.",
+  "title": "Saturday event",
+  "message": "Meet at the Grand Exchange at 8 PM.",
   "kind": "clan",
   "showOnLogin": true
 }

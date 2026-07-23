@@ -1,41 +1,44 @@
-# Arquitetura
+# Architecture
+
+[English](architecture.md) | [Brazilian Portuguese](architecture.pt-BR.md)
 
 ```mermaid
 flowchart LR
-    Game["Eventos do jogo"] --> Plugin["Plugin RuneLite"]
-    Clan["Clan chat Live On"] --> Auth["Validação local"]
+    Game["Game events"] --> Plugin["RuneLite plugin"]
+    Clan["Live On clan chat"] --> Auth["Local validation"]
     Auth --> Plugin
-    Plugin -->|"HTTPS + token"| API["API Live On"]
-    API --> DB[("SQLite / banco futuro")]
+    Plugin -->|"HTTPS + token"| API["Live On API"]
+    API --> DB[("SQLite / future database")]
     API --> WOM["Wise Old Man v2"]
-    API --> Discord["Webhook Discord"]
-    Site["Página da Live On"] -->|"mesma API"| API
-    API --> Announcements["Anúncios e mensagem de login"]
+    API --> Discord["Discord webhook"]
+    Site["Live On website"] -->|"same API"| API
+    API --> Announcements["Announcements and login message"]
     Announcements --> Plugin
 ```
 
-## Regra principal
+## Core rule
 
-O RuneLite captura apenas eventos do personagem local. Consolidação de dados,
-permissões de staff, WOM e Discord ficam no backend. Isso evita distribuir
-segredos e deixa o site consumir a mesma fonte usada pelo plugin.
+RuneLite captures events only for the local character. Data consolidation,
+staff permissions, Wise Old Man access and Discord delivery remain in the
+backend. This prevents secrets from being distributed and lets the website
+consume the same data source as the plugin.
 
-## Cliente RuneLite
+## RuneLite client
 
-- `LiveOnPlugin`: registra/desregistra componentes e encaminha eventos.
-- `ClanAccessManager`: lê a sessão local do RuneLite e pede autorização.
-- `LiveOnApiClient`: único lugar que conhece URLs, JSON e headers.
-- `events/*`: transforma eventos em objetos pequenos; não desenha interface.
-- `AnnouncementService`: consulta anúncios fora da client thread.
-- `ui/*`: somente renderiza objetos vindos da API.
+- `LiveOnPlugin`: registers components and forwards events.
+- `ClanAccessManager`: reads the local RuneLite session and requests access.
+- `LiveOnApiClient`: the only component that knows URLs, JSON and HTTP headers.
+- `events/*`: turns events into small data objects; it does not render UI.
+- `AnnouncementService`: polls announcements outside the client thread.
+- `ui/*`: renders objects received from the API.
 
 ## Backend
 
-- `main.py`: rotas e regras de autorização.
-- `database.py`: SQL e persistência isolados.
-- `wom.py`: cache e adaptação da API Wise Old Man.
-- `discord.py`: formatação dos embeds.
-- `security.py`: hash do código e tokens HMAC temporários.
+- `main.py`: routes and authorization rules.
+- `database.py`: isolated SQL and persistence.
+- `wom.py`: Wise Old Man API caching and adaptation.
+- `discord.py`: Discord embed formatting.
+- `security.py`: access-code hashing and temporary HMAC tokens.
 
-SQLite atende a primeira fase. Para Postgres, mantenha as mesmas funções públicas
-de `Database` ou crie uma implementação equivalente; o plugin não muda.
+SQLite supports the first project phase. A PostgreSQL implementation should
+retain the same public `Database` methods so the plugin remains unchanged.

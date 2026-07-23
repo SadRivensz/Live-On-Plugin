@@ -1,6 +1,6 @@
 # Live On — RuneLite Clan Hub
 
-[English](README.md) | [Português (Brasil)](README.pt-BR.md)
+[English](README.md) | [Brazilian Portuguese](README.pt-BR.md)
 
 Live On is a RuneLite plugin and companion API built for the **Live On** Old
 School RuneScape clan. It brings drops, pets, staff announcements, member

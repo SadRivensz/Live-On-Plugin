@@ -1,12 +1,14 @@
-# Contribuindo
+# Contributing
 
-1. Uma classe deve ter uma responsabilidade clara.
-2. Eventos do RuneLite não fazem I/O bloqueante.
-3. HTTP passa por `LiveOnApiClient`; SQL passa por `Database`.
-4. Não adicione segredos, webhooks ou `.env` ao Git.
-5. Use constantes `gameval` quando precisar de IDs fixos do jogo.
-6. Adicione um teste para regras de autorização ou transformação de dados.
-7. Rode `gradlew test` e os testes do backend antes de abrir PR.
+[English](CONTRIBUTING.md) | [Brazilian Portuguese](CONTRIBUTING.pt-BR.md)
 
-Formatação e nomes devem priorizar leitura. Comentários explicam decisões, não
-repetem o que a linha de código já diz.
+1. Each class should have one clear responsibility.
+2. RuneLite events must not perform blocking I/O.
+3. HTTP requests go through `LiveOnApiClient`; SQL goes through `Database`.
+4. Never add secrets, webhooks or `.env` files to Git.
+5. Use `gameval` constants when fixed game IDs are required.
+6. Add tests for authorization rules and data transformations.
+7. Run `gradlew test` and the backend tests before opening a pull request.
+
+Formatting and naming should optimize for readability. Comments explain
+decisions; they do not repeat what the code already says.

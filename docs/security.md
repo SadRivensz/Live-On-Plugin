@@ -1,30 +1,37 @@
-# Segurança e privacidade
+# Security and privacy
 
-## O que o plugin envia
+[English](security.md) | [Brazilian Portuguese](security.pt-BR.md)
 
-Somente após o membro ativar a integração:
+## Data sent by the plugin
 
-- RSN e rank usados na autorização;
-- origem, itens e valor dos drops que passam do limite configurado;
-- mensagens locais que identificam pet ou nova entrada do collection log.
+Only after a member enables the integration:
 
-O endereço IP será visível ao servidor como em qualquer requisição HTTPS. Por
-isso a opção é desativada por padrão e possui o aviso exigido pelo Plugin Hub.
+- the RSN and clan rank used for authorization;
+- the source, items and value of drops above the configured threshold;
+- local game messages that identify a pet or new Collection Log entry;
+- a drop screenshot when screenshot capture is enabled.
 
-## O que nunca deve entrar no plugin
+The server sees the member's IP address as it would for any HTTPS request. The
+integration is therefore disabled by default and includes the disclosure
+required by the Plugin Hub.
 
-- webhook do Discord;
-- segredo HMAC do backend;
-- chave de API do WOM;
-- código de acesso em texto fixo no repositório;
-- credenciais da conta RuneScape/Jagex.
+## Data that must never be included in the plugin
 
-## Limitações conhecidas
+- Discord webhook;
+- backend HMAC secret;
+- Wise Old Man or RuneProfile API keys;
+- a hardcoded plain-text access code;
+- RuneScape or Jagex account credentials.
 
-- O clan chat local confirma contexto, mas o backend deve continuar sendo a
-  autoridade final.
-- Um código compartilhado pode vazar; a validação por RSN e tokens temporários
-  reduz o impacto. No futuro, pode-se trocar o código por vínculo Discord/RSN.
-- Collection log histórico não é público no WOM. O projeto armazena entradas
-  novas observadas no cliente; importação histórica exige opt-in e outra fonte.
-- Use HTTPS obrigatório em produção e limite requisições no proxy reverso.
+## Known limitations
+
+- Local clan-chat membership confirms context, but the backend remains the final
+  authority.
+- A shared access code may leak. Server-side RSN validation and short-lived
+  tokens reduce its impact. Discord/RSN linking can replace the shared code in a
+  future version.
+- Historical Collection Log data is not public through Wise Old Man. The
+  project stores newly observed client entries; importing historical data
+  requires explicit consent and another source.
+- Production deployments must use HTTPS and should rate-limit requests at the
+  reverse proxy.

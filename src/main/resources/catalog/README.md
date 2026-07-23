@@ -1,11 +1,14 @@
-# Catálogos da Live On
+# Live On catalogs
 
-- `bosses.json`: nomes exibidos, métrica do Wise Old Man e `iconItemId` usado como ícone.
-- `ranks.json`: tradução dos ranks e indicação de quais ranks são staff.
-- `items.json`: somente regras e aliases específicos do clã.
+[English](README.md) | [Brazilian Portuguese](README.pt-BR.md)
 
-Os milhares de itens do jogo não são duplicados aqui. O plugin usa `ItemManager`,
-que acompanha automaticamente o cache do RuneLite após atualizações do jogo.
-Os ícones de bosses usam itens do cache pelo `iconItemId`, evitando PNGs
-duplicados. Quando um boss novo ainda não estiver no catálogo, a interface usa
-um troféu neutro. Ícones próprios de ranks podem ficar em `resources/ranks`.
+- `bosses.json`: display names, Wise Old Man metrics and the `iconItemId` used
+  for each icon.
+- `ranks.json`: clan-rank display names and staff permissions.
+- `items.json`: clan-specific rules and aliases only.
+
+The plugin does not duplicate the game's thousands of items. It uses
+`ItemManager`, which follows RuneLite's cache automatically after game updates.
+Boss icons use cache items through `iconItemId`, avoiding duplicate PNG files.
+When a new boss is not yet in the catalog, the interface uses a neutral trophy.
+Custom rank icons may be stored in `resources/ranks`.
