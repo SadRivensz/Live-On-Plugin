@@ -77,6 +77,31 @@ Edite `.env` antes de usar. Em produção, configure obrigatoriamente:
 
 A documentação interativa fica em `http://localhost:8080/docs`.
 
+## Hospedar o backend na Discloud
+
+O `discloud.config` da raiz publica somente a API FastAPI da pasta `server`.
+Na integração GitHub da Discloud, selecione este repositório e cadastre as
+variáveis de produção na área **Environment Variables**:
+
+- `LIVE_ON_ENV=production`;
+- `LIVE_ON_DATABASE_PATH=data/live-on.db`;
+- `LIVE_ON_TOKEN_SECRET` com 32+ caracteres aleatórios;
+- `LIVE_ON_ACCESS_CODE_SHA256` com o hash do código distribuído à staff;
+- `LIVE_ON_WOM_GROUP_ID` com o ID numérico do grupo Live On;
+- `LIVE_ON_WOM_API_KEY`, se o grupo utilizar chave;
+- `LIVE_ON_STAFF_RSNS` com os RSNs da staff separados por vírgula;
+- `LIVE_ON_DISCORD_WEBHOOK` com o webhook privado;
+- `LIVE_ON_LOGIN_MESSAGE` e `LIVE_ON_CORS_ORIGINS`, conforme desejado.
+
+O subdomínio configurado é `live-on-clan-api.discloud.app`. Caso o ID já esteja
+ocupado, altere somente `ID` no `discloud.config`. Depois do deploy, confirme
+`https://SEU-ID.discloud.app/health` e use essa URL nas configurações do plugin.
+
+Para upload manual, compacte o conteúdo da raiz do repositório, mantendo
+`discloud.config`, `server/requirements.txt` e `server/app/` nos mesmos caminhos.
+O `.discloudignore` evita enviar o código Java e os artefatos locais que não são
+necessários para executar a API.
+
 ## Segurança da entrada no clã
 
 Uma senha colocada no `.jar` poderia ser extraída. Por isso o plugin:
