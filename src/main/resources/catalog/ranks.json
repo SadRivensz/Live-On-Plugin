@@ -1,9 +1,22 @@
 {
   "ranks": [
-    { "key": "member", "displayName": "Membro", "staff": false, "icon": "ranks/member.png" },
-    { "key": "moderator", "displayName": "Moderador", "staff": true, "icon": "ranks/moderator.png" },
-    { "key": "administrator", "displayName": "Administrador", "staff": true, "icon": "ranks/administrator.png" },
-    { "key": "deputy_owner", "displayName": "Vice-líder", "staff": true, "icon": "ranks/deputy-owner.png" },
-    { "key": "owner", "displayName": "Líder", "staff": true, "icon": "ranks/owner.png" }
+    { "key": "owner", "displayName": "Owner", "staff": true, "icon": "icons/ranks/owner.png" },
+    { "key": "deputy_owner", "displayName": "Deputy Owner", "staff": true, "icon": "icons/ranks/deputy_owner.png" },
+    { "key": "moderator", "displayName": "Moderador", "staff": true, "icon": "icons/ranks/moderator.png" },
+    { "key": "administrator", "displayName": "Administrador", "staff": true, "icon": "icons/ranks/administrator.png" },
+    { "key": "beast", "displayName": "Beast", "staff": false, "icon": "icons/ranks/beast.png" },
+    { "key": "marshal", "displayName": "Marshal", "staff": false, "icon": "icons/ranks/marshal.png" },
+    { "key": "tztok", "displayName": "TzTok", "staff": false, "icon": "icons/ranks/tztok.png" },
+    { "key": "colonel", "displayName": "Coronel", "staff": false, "icon": "icons/ranks/colonel.png" },
+    { "key": "general", "displayName": "General", "staff": false, "icon": "icons/ranks/general.png" },
+    { "key": "captain", "displayName": "Capitão", "staff": false, "icon": "icons/ranks/captain.png" },
+    { "key": "lieutenant", "displayName": "Tenente", "staff": false, "icon": "icons/ranks/lieutenant.png" },
+    { "key": "cadet", "displayName": "Cadete", "staff": false, "icon": "icons/ranks/cadet.png" },
+    { "key": "sergeant", "displayName": "Sargento", "staff": false, "icon": "icons/ranks/sergeant.png" },
+    { "key": "novice", "displayName": "Aluno", "staff": false, "icon": "icons/ranks/novice.png" },
+    { "key": "corporal", "displayName": "Cabo", "staff": false, "icon": "icons/ranks/corporal.png" },
+    { "key": "recruit", "displayName": "Recruta", "staff": false, "icon": "icons/ranks/recruit.png" },
+    { "key": "helper", "displayName": "Helper", "staff": false, "icon": "icons/ranks/helper.png" },
+    { "key": "member", "displayName": "Membro", "staff": false, "icon": "icons/ranks/member.png" }
   ]
 }

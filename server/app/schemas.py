@@ -31,6 +31,7 @@ class DropPayload(BaseModel):
     killCount: int | None = Field(default=None, ge=0)
     totalValue: int = Field(ge=0)
     items: list[ItemPayload] = Field(min_length=1, max_length=80)
+    screenshotBase64: str | None = Field(default=None, max_length=10_500_000)
 
     @field_validator("totalValue")
     @classmethod
@@ -56,6 +57,17 @@ class AnnouncementPayload(BaseModel):
     showOnLogin: bool = False
 
 
+class ItemGoalPayload(BaseModel):
+    itemId: int = Field(gt=0)
+    itemName: str = Field(min_length=1, max_length=120)
+
+    @field_validator("itemName")
+    @classmethod
+    def strip_item_name(cls, value: str) -> str:
+        return value.strip()
+
+
 class StatusResponse(BaseModel):
     ok: bool = True
     message: str = "ok"
+    achievement: dict | None = None

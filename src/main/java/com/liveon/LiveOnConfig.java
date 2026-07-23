@@ -49,7 +49,7 @@ public interface LiveOnConfig extends Config
     )
     default String apiBaseUrl()
     {
-        return "https://api.liveonclan.com";
+        return "https://liveonplugin.discloud.app";
     }
 
     @ConfigItem(

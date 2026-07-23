@@ -20,7 +20,7 @@ import net.runelite.api.clan.ClanChannelMember;
 public class ClanAccessManager
 {
     public static final String TARGET_CLAN = "Live On";
-    private static final String PLUGIN_VERSION = "0.1.0";
+    private static final String PLUGIN_VERSION = "0.2.6";
 
     private final Client client;
     private final LiveOnConfig config;

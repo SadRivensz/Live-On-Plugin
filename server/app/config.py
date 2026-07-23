@@ -16,6 +16,11 @@ class Settings:
     access_code_sha256: str = os.getenv("LIVE_ON_ACCESS_CODE_SHA256", "").lower()
     wom_group_id: int = int(os.getenv("LIVE_ON_WOM_GROUP_ID", "0"))
     wom_api_key: str = os.getenv("LIVE_ON_WOM_API_KEY", "")
+    runeprofile_base_url: str = os.getenv(
+        "LIVE_ON_RUNEPROFILE_BASE_URL",
+        "https://api.runeprofile.com/v1",
+    )
+    runeprofile_api_key: str = os.getenv("LIVE_ON_RUNEPROFILE_API_KEY", "")
     bootstrap_members: tuple[str, ...] = _csv("LIVE_ON_BOOTSTRAP_MEMBERS")
     staff_rsns: tuple[str, ...] = _csv("LIVE_ON_STAFF_RSNS")
     discord_webhook: str = os.getenv("LIVE_ON_DISCORD_WEBHOOK", "")
@@ -25,6 +30,10 @@ class Settings:
     )
     cors_origins: tuple[str, ...] = _csv("LIVE_ON_CORS_ORIGINS")
     token_lifetime_seconds: int = int(os.getenv("LIVE_ON_TOKEN_LIFETIME_SECONDS", "43200"))
+    screenshot_directory: str = os.getenv("LIVE_ON_SCREENSHOT_DIRECTORY", "./data/screenshots")
+    screenshot_base_url: str = os.getenv("LIVE_ON_SCREENSHOT_BASE_URL", "")
+    member_site_base_url: str = os.getenv("LIVE_ON_MEMBER_SITE_BASE_URL", "https://liveon.discloud.app")
+    public_base_url: str = os.getenv("LIVE_ON_PUBLIC_BASE_URL", "")
 
     def validate(self) -> None:
         if self.environment == "production" and len(self.token_secret) < 32:

@@ -1,65 +1,121 @@
 # Live On — RuneLite Clan Hub
 
-Plugin e API de apoio para o clã **Live On**. O projeto reúne feed de drops e
-pets, anúncios da staff, consulta de membros, collection log recente e rankings
-mensais de XP/EHP/EHB no painel lateral do RuneLite.
+[English](README.md) | [Português (Brasil)](README.pt-BR.md)
 
-O código foi dividido por responsabilidade para que cada área possa ser alterada
-sem exigir conhecimento do projeto inteiro.
+Live On is a RuneLite plugin and companion API built for the **Live On** Old
+School RuneScape clan. It brings drops, pets, staff announcements, member
+profiles, account progress and monthly competitions into one compact side
+panel.
 
-## O que já está implementado
+The code is organized by responsibility and uses editable catalogs for game
+assets and metadata. This keeps routine maintenance approachable when RuneLite,
+Wise Old Man, RuneProfile or Old School RuneScape add new content.
 
-- autorização em duas etapas: clan chat local + lista oficial no servidor;
-- token individual de sessão, sem webhook ou segredo do Discord no plugin;
-- captura de drops por NPC e eventos do Loot Tracker;
-- detecção de pets e novas entradas do collection log;
-- embeds de drops, pets e anúncios enviados pelo backend ao Discord;
-- anúncios no chat do jogo e mensagem de login;
-- painel lateral com início, drops, busca de membros, perfil e rankings;
-- perfil no estilo compacto do WOM, com resumo e abas Skills/Bosses/Atividades/Log;
-- ranking de XP, EHP e EHB do mês atual ou anterior;
-- integração centralizada com Wise Old Man, com cache do roster;
-- backend FastAPI + SQLite pronto para Docker;
-- catálogos editáveis de bosses, ranks e regras especiais de itens.
+## Features
 
-## Organização
+- Two-stage clan access validation using the local RuneLite clan roster and the
+  server-side official roster.
+- Short-lived member sessions; Discord webhooks and service keys never ship
+  inside the plugin JAR.
+- NPC loot and Loot Tracker event capture.
+- Pet and new Collection Log entry detection.
+- Drop screenshots with an expandable preview inside RuneLite.
+- Clickable screenshots, item details and a branded footer in Discord embeds.
+- Per-member item goals and a congratulatory announcement when the goal drops,
+  including the number of days spent hunting it.
+- Staff announcements in the game chat and a login message shown only when the
+  local player logs in.
+- Compact side panel with home, recent drops, member search and monthly
+  rankings.
+- Wise Old Man profiles with skills, boss kill counts, activities, EHP and EHB.
+- RuneProfile collection popup with per-boss, raid, clue and activity
+  completion, split into obtained and missing items.
+- Native RuneLite Hiscore icons and official clan-rank icons.
+- Optional Discord avatar enrichment for members who linked their account on
+  the Live On website.
+- Responsive grids and pagination designed for RuneLite's narrow side panel.
+- Current-month and previous-month XP, EHP and EHB rankings.
+- Shared server-side caching and request coalescing for Wise Old Man and
+  RuneProfile requests.
+- FastAPI and SQLite companion service, ready for local development, Docker or
+  Discloud.
+
+## Architecture
+
+```text
+RuneLite plugin
+    │ authenticated events and profile requests
+    ▼
+Live On FastAPI service
+    ├── Wise Old Man: roster, snapshots, XP, EHP and EHB
+    ├── RuneProfile: optional collection-log details
+    ├── Live On website: optional public Discord avatar
+    ├── SQLite: sessions, drops, goals and announcements
+    └── Discord: server-side webhook delivery
+```
 
 ```text
 src/main/java/com/liveon/
-├── LiveOnPlugin.java          entrada e eventos do RuneLite
-├── auth/                      validação local e sessão
-├── api/                       cliente HTTP e objetos JSON
-├── events/                    drops, pets e collection log
-├── announcements/             polling e mensagens no chat
-├── assets/                    carregamento dos catálogos
-└── ui/                        painel e cartões da interface
+├── LiveOnPlugin.java          RuneLite lifecycle and events
+├── auth/                      local clan validation and sessions
+├── api/                       HTTP client and transport models
+├── events/                    drops, pets and Collection Log
+├── announcements/             polling and in-game messages
+├── assets/                    catalog and icon loading
+└── ui/                        side panel, cards and popups
 
-src/main/resources/catalog/   bosses, ranks e regras de itens
-server/app/                    API, SQLite, WOM e Discord
-docs/                          decisões e guias de manutenção
+src/main/resources/catalog/    editable boss, rank and item metadata
+server/app/                    FastAPI, SQLite and integrations
+server/tests/                  backend unit tests
+docs/                          API, maintenance and security notes
 ```
 
-## Rodar o plugin em desenvolvimento
+## RuneLite development
 
-Requisitos: JDK 11 ou superior. O código produzido é Java 11, conforme o Plugin
-Hub.
+### Requirements
+
+- JDK 11 or newer. The generated bytecode targets Java 11 for Plugin Hub
+  compatibility.
+- A running Live On API instance for authenticated features.
+
+### Build and run
 
 ```powershell
 .\gradlew.bat test
 .\gradlew.bat run
 ```
 
-No RuneLite de desenvolvimento:
+In the development RuneLite client:
 
-1. Ative o plugin **Live On**.
-2. Nas configurações, ative `Ativar integração Live On`.
-3. Para desenvolvimento local, use `http://localhost:8080` no endereço da API.
-4. Entre em uma conta que esteja no clan chat `Live On` e no roster do backend.
+1. Enable **Live On**.
+2. Open the plugin settings and enable **Live On integration**.
+3. Set the API address to `http://127.0.0.1:8080` for local development.
+4. Log in with an account present in the `Live On` clan chat and in the API
+   roster.
 
-Para contas Jagex, siga o guia oficial do RuneLite:
-https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts
+Jagex Account users can follow the
+[official RuneLite development guide](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts).
 
-## Rodar o backend
+## Run the API locally
+
+Python 3.12 is recommended.
+
+```powershell
+cd server
+Copy-Item .env.example .env
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8080 --env-file .env
+```
+
+Edit `server/.env` before starting the service. Verify it at:
+
+- Health check: `http://127.0.0.1:8080/health`
+- Interactive API documentation: `http://127.0.0.1:8080/docs`
+
+Docker is an optional alternative:
 
 ```powershell
 cd server
@@ -67,70 +123,156 @@ Copy-Item .env.example .env
 docker compose up --build
 ```
 
-Edite `.env` antes de usar. Em produção, configure obrigatoriamente:
+## Server configuration
 
-- `LIVE_ON_TOKEN_SECRET` com 32+ caracteres aleatórios;
-- `LIVE_ON_ACCESS_CODE_SHA256` com o hash do código da staff;
-- `LIVE_ON_WOM_GROUP_ID` com o grupo oficial da Live On;
-- `LIVE_ON_DISCORD_WEBHOOK` somente no servidor;
-- `LIVE_ON_STAFF_RSNS` com os RSNs autorizados a publicar.
+The complete template is available in [`server/.env.example`](server/.env.example).
+The most important variables are:
 
-A documentação interativa fica em `http://localhost:8080/docs`.
+| Variable | Purpose |
+| --- | --- |
+| `LIVE_ON_ENV` | `development` or `production` |
+| `LIVE_ON_DATABASE_PATH` | SQLite database path |
+| `LIVE_ON_SCREENSHOT_DIRECTORY` | Stored screenshot directory |
+| `LIVE_ON_PUBLIC_BASE_URL` | Public API origin used in screenshot links |
+| `LIVE_ON_TOKEN_SECRET` | Random signing secret with at least 32 characters |
+| `LIVE_ON_ACCESS_CODE_SHA256` | SHA-256 hash of the private clan access code |
+| `LIVE_ON_WOM_GROUP_ID` | Official Wise Old Man group ID |
+| `LIVE_ON_WOM_API_KEY` | Optional Wise Old Man API key |
+| `LIVE_ON_RUNEPROFILE_API_KEY` | Optional RuneProfile key for a higher rate limit |
+| `LIVE_ON_BOOTSTRAP_MEMBERS` | Development-only fallback roster |
+| `LIVE_ON_STAFF_RSNS` | Comma-separated staff RSNs |
+| `LIVE_ON_DISCORD_WEBHOOK` | Private Discord webhook URL |
+| `LIVE_ON_MEMBER_SITE_BASE_URL` | Optional public Live On member-profile origin |
+| `LIVE_ON_LOGIN_MESSAGE` | Message shown to the local player after login |
+| `LIVE_ON_CORS_ORIGINS` | Comma-separated browser origins |
 
-## Hospedar o backend na Discloud
+Generate the access-code hash in PowerShell:
 
-O `discloud.config` da raiz publica somente a API FastAPI da pasta `server`.
-Na integração GitHub da Discloud, selecione este repositório e cadastre as
-variáveis de produção na área **Environment Variables**:
+```powershell
+([BitConverter]::ToString(
+  [Security.Cryptography.SHA256]::HashData(
+    [Text.Encoding]::UTF8.GetBytes('replace-with-your-access-code')
+  )
+)).Replace('-', '').ToLower()
+```
 
-- `LIVE_ON_ENV=production`;
-- `LIVE_ON_DATABASE_PATH=data/live-on.db`;
-- `LIVE_ON_TOKEN_SECRET` com 32+ caracteres aleatórios;
-- `LIVE_ON_ACCESS_CODE_SHA256` com o hash do código distribuído à staff;
-- `LIVE_ON_WOM_GROUP_ID` com o ID numérico do grupo Live On;
-- `LIVE_ON_WOM_API_KEY`, se o grupo utilizar chave;
-- `LIVE_ON_STAFF_RSNS` com os RSNs da staff separados por vírgula;
-- `LIVE_ON_DISCORD_WEBHOOK` com o webhook privado;
-- `LIVE_ON_LOGIN_MESSAGE` e `LIVE_ON_CORS_ORIGINS`, conforme desejado.
+Do not put the plain access code in the server configuration. The plugin receives
+the code from the member and the server stores only its SHA-256 hash.
 
-O subdomínio configurado é `live-on-clan-api.discloud.app`. Caso o ID já esteja
-ocupado, altere somente `ID` no `discloud.config`. Depois do deploy, confirme
-`https://SEU-ID.discloud.app/health` e use essa URL nas configurações do plugin.
+## Deploy the API to Discloud
 
-Para upload manual, compacte o conteúdo da raiz do repositório, mantendo
-`discloud.config`, `server/requirements.txt` e `server/app/` nos mesmos caminhos.
-O `.discloudignore` evita enviar o código Java e os artefatos locais que não são
-necessários para executar a API.
+This repository already contains a production-ready `discloud.config` at its
+root. It starts only the Python API in `server/`; the RuneLite build is not
+required at runtime.
 
-## Segurança da entrada no clã
+### Option A — GitHub integration
 
-Uma senha colocada no `.jar` poderia ser extraída. Por isso o plugin:
+1. Fork or upload this repository to your GitHub account.
+2. In the Discloud Dashboard, open **GitHub Integration**, authorize the same
+   GitHub account that owns the repository, and grant access to this repository.
+3. Select **Upload → GitHub**, choose the repository and branch, and confirm that
+   Discloud detects the root-level `discloud.config`.
+4. In **Environment Variables**, add the production values listed below.
+5. Start the deployment and watch the build/start logs until the app is online.
 
-1. verifica no próprio RuneLite se o personagem está no clan chat `Live On`;
-2. envia RSN, rank e código para o backend;
-3. o backend confirma o RSN no grupo do Wise Old Man (ou roster local em dev);
-4. somente então emite um token individual e temporário.
+### Option B — ZIP upload
 
-O webhook do Discord, a chave do WOM e os segredos ficam exclusivamente no
-servidor. Veja [docs/security.md](docs/security.md).
+1. Create a ZIP whose top level contains `discloud.config`, `server/requirements.txt`
+   and `server/app/`. Do not wrap those files inside an extra parent directory.
+2. Exclude `.git`, `.gradle`, `build`, virtual environments, `__pycache__`,
+   local databases and the real `.env`.
+3. In the Discloud Dashboard, select **Upload** and send the ZIP.
+4. Add the production environment variables and start the application.
 
-## Fontes técnicas
+The release ZIP produced by this project is already arranged for this option.
 
-- Arquitetura de interface: plugin Flux (`abristow3/Flux-Runelite-Plugin`).
-- Captura de eventos: arquitetura do Dink (`pajlads/DinkPlugin`).
-- Estrutura de build: `runelite/example-plugin`.
-- EHP/EHB e rankings: API v2 do Wise Old Man.
+### Required production values
 
-O código deste repositório é original; as referências foram usadas para entender
-os eventos e padrões públicos das APIs.
+Set at least:
 
-## Antes de publicar no Plugin Hub
+```dotenv
+LIVE_ON_ENV=production
+LIVE_ON_DATABASE_PATH=data/live-on.db
+LIVE_ON_SCREENSHOT_DIRECTORY=data/screenshots
+LIVE_ON_PUBLIC_BASE_URL=https://YOUR-ID.discloud.app
+LIVE_ON_TOKEN_SECRET=replace-with-a-long-random-secret
+LIVE_ON_ACCESS_CODE_SHA256=replace-with-the-access-code-hash
+LIVE_ON_WOM_GROUP_ID=replace-with-the-group-id
+LIVE_ON_STAFF_RSNS=Staff One,Staff Two
+LIVE_ON_DISCORD_WEBHOOK=replace-with-the-private-webhook
+LIVE_ON_MEMBER_SITE_BASE_URL=https://your-member-site.example
+LIVE_ON_LOGIN_MESSAGE="Welcome to Live On! Check the side panel for announcements."
+LIVE_ON_CORS_ORIGINS=https://your-public-site.example
+LIVE_ON_TOKEN_LIFETIME_SECONDS=43200
+```
 
-- trocar `https://api.liveonclan.com` pelo domínio real e HTTPS;
-- informar o ID oficial do grupo WOM;
-- substituir o ícone provisório pelo brasão oficial, se desejado;
-- revisar a política de privacidade e a warning do Plugin Hub;
-- testar login, drop, pet, anúncios e logout manualmente no jogo;
-- enviar o repositório ao `runelite/plugin-hub` com um commit fixo.
+Optional variables such as `LIVE_ON_WOM_API_KEY` and
+`LIVE_ON_RUNEPROFILE_API_KEY` may be left empty. Use
+`LIVE_ON_BOOTSTRAP_MEMBERS` only as a development fallback, not as the official
+production roster.
 
-Licença BSD-2-Clause.
+### Verify the deployment
+
+1. Open `https://YOUR-ID.discloud.app/health` and confirm a successful response.
+2. Open `https://YOUR-ID.discloud.app/docs` if API documentation should be
+   publicly reachable.
+3. Set the RuneLite plugin's API address to
+   `https://YOUR-ID.discloud.app`, without a trailing slash.
+4. Test authentication, a staff announcement, a drop screenshot and a ranking
+   request.
+5. Back up `data/live-on.db` and `data/screenshots` before any destructive
+   redeployment or application removal.
+
+Never commit the production `.env`, Discord webhook, API keys, access code or
+token secret. Keep them in Discloud's environment-variable configuration.
+
+## Clan access and privacy
+
+A password embedded in a JAR can be extracted. Live On therefore performs two
+checks:
+
+1. RuneLite confirms that the local character is in the `Live On` clan chat.
+2. The API validates the RSN against the official Wise Old Man roster, or the
+   explicitly configured development fallback.
+3. Only then does the API issue an individual, short-lived session token.
+
+The Discord webhook, Wise Old Man key, RuneProfile key and signing secret remain
+server-side. Player events and screenshots are submitted only when integration
+is enabled and the account is authorized. See
+[`docs/security.md`](docs/security.md) for the detailed threat model.
+
+## Tests and release build
+
+```powershell
+.\gradlew.bat clean test shadowJar --no-build-cache
+
+cd server
+python -m unittest discover -s tests -v
+```
+
+The shaded plugin JAR is written to `build/libs/`.
+
+Before requesting Plugin Hub review:
+
+- verify that the production `/health` endpoint responds;
+- review the Plugin Hub warning and privacy disclosure;
+- manually test login, logout, drop, pet, goal, announcement and screenshot
+  flows;
+- test member profiles and each monthly ranking mode;
+- submit an immutable commit hash to `runelite/plugin-hub`.
+
+## Technical references
+
+- UI inspiration: [Flux RuneLite Plugin](https://github.com/abristow3/Flux-Runelite-Plugin)
+- Event architecture reference: [Dink](https://github.com/pajlads/DinkPlugin)
+- Build structure: [RuneLite example plugin](https://github.com/runelite/example-plugin)
+- Account and efficiency data: [Wise Old Man API](https://docs.wiseoldman.net/)
+- Collection data: [RuneProfile API](https://api.runeprofile.com/v1/docs)
+- Hosting: [Discloud documentation](https://docs.discloud.com/en/how-to-host-using/dashboard)
+
+The implementation in this repository is original. The projects above were used
+as public references for RuneLite events, UI conventions and API behavior.
+
+## License
+
+[BSD 2-Clause](LICENSE)

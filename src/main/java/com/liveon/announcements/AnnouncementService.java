@@ -38,6 +38,7 @@ public class AnnouncementService
     private ScheduledExecutorService scheduler;
     private ScheduledFuture<?> pollTask;
     private volatile boolean primed;
+    private volatile boolean localLoginMessagePending;
 
     @Inject
     public AnnouncementService(
@@ -80,6 +81,18 @@ public class AnnouncementService
         }
         shownAnnouncementIds.clear();
         primed = false;
+        localLoginMessagePending = false;
+    }
+
+    /** Marks a real login of the local account, not a clan-list refresh. */
+    public void onLocalLogin()
+    {
+        localLoginMessagePending = true;
+    }
+
+    public void onLocalLogout()
+    {
+        localLoginMessagePending = false;
     }
 
     private void onSessionChanged(AccessSession session)
@@ -96,9 +109,13 @@ public class AnnouncementService
             return;
         }
 
-        if (config.showLoginMessage() && session.getLoginMessage() != null && !session.getLoginMessage().isEmpty())
+        if (localLoginMessagePending
+            && config.showLoginMessage()
+            && session.getLoginMessage() != null
+            && !session.getLoginMessage().isEmpty())
         {
             queueChat(session.getLoginMessage());
+            localLoginMessagePending = false;
         }
         poll();
         if (pollTask == null && scheduler != null)
@@ -138,7 +155,7 @@ public class AnnouncementService
                 }
                 for (ApiModels.Announcement announcement : response.announcements)
                 {
-                    if (shownAnnouncementIds.add(announcement.id))
+                    if (shownAnnouncementIds.add(announcement.id) && "clan".equals(announcement.kind))
                     {
                         queueChat(announcement.title + ": " + announcement.message);
                     }

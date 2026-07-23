@@ -1,8 +1,12 @@
 package com.liveon.api;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.liveon.LiveOnConfig;
 import java.io.IOException;
+import java.awt.image.BufferedImage;
+import java.util.concurrent.TimeUnit;
+import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +33,11 @@ public class LiveOnApiClient
     @Inject
     public LiveOnApiClient(OkHttpClient httpClient, Gson gson, LiveOnConfig config)
     {
-        this.httpClient = httpClient;
+        this.httpClient = httpClient.newBuilder()
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .callTimeout(70, TimeUnit.SECONDS)
+            .build();
         this.gson = gson;
         this.config = config;
     }
@@ -76,10 +84,88 @@ public class LiveOnApiClient
 
     public void getRecentDrops(ApiCallback<ApiModels.DropListResponse> callback)
     {
-        get("/v1/drops", ApiModels.DropListResponse.class, callback);
+        getRecentDrops(1, 5, callback);
+    }
+
+    public void getRecentDrops(int page, int pageSize, ApiCallback<ApiModels.DropListResponse> callback)
+    {
+        HttpUrl base = baseUrl("/v1/drops");
+        if (base == null)
+        {
+            callback.onFailure("Endereço da API inválido");
+            return;
+        }
+        HttpUrl url = base.newBuilder()
+            .addQueryParameter("page", String.valueOf(Math.max(1, page)))
+            .addQueryParameter("limit", String.valueOf(Math.max(1, pageSize)))
+            .build();
+        execute(new Request.Builder().url(url).get(), ApiModels.DropListResponse.class, true, callback);
+    }
+
+    public void getItemGoal(ApiCallback<ApiModels.ItemGoalResponse> callback)
+    {
+        get("/v1/item-goal", ApiModels.ItemGoalResponse.class, callback);
+    }
+
+    public void setItemGoal(ApiModels.ItemGoalRequest body, ApiCallback<ApiModels.ItemGoalResponse> callback)
+    {
+        request("PUT", "/v1/item-goal", body, ApiModels.ItemGoalResponse.class, callback);
+    }
+
+    public void clearItemGoal(ApiCallback<ApiModels.StatusResponse> callback)
+    {
+        request("DELETE", "/v1/item-goal", null, ApiModels.StatusResponse.class, callback);
+    }
+
+    public void getImage(String imageUrl, ApiCallback<BufferedImage> callback)
+    {
+        HttpUrl url = resolveUrl(imageUrl);
+        if (url == null)
+        {
+            callback.onFailure("Imagem inválida");
+            return;
+        }
+        Request.Builder builder = new Request.Builder().url(url).get().header("User-Agent", "Live-On-RuneLite/0.2.6");
+        httpClient.newCall(builder.build()).enqueue(new Callback()
+        {
+            @Override
+            public void onFailure(Call call, IOException exception)
+            {
+                callback.onFailure("Não foi possível carregar a screenshot");
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException
+            {
+                try (Response closeable = response)
+                {
+                    if (!closeable.isSuccessful() || closeable.body() == null)
+                    {
+                        callback.onFailure("Screenshot indisponível");
+                        return;
+                    }
+                    BufferedImage image = ImageIO.read(closeable.body().byteStream());
+                    if (image == null)
+                    {
+                        callback.onFailure("Formato de screenshot inválido");
+                        return;
+                    }
+                    callback.onSuccess(image);
+                }
+            }
+        });
     }
 
     public void searchMembers(String query, ApiCallback<ApiModels.MemberListResponse> callback)
+    {
+        searchMembers(query, 1, 25, callback);
+    }
+
+    public void searchMembers(
+        String query,
+        int page,
+        int limit,
+        ApiCallback<ApiModels.MemberListResponse> callback)
     {
         HttpUrl base = baseUrl("/v1/members");
         if (base == null)
@@ -87,7 +173,11 @@ public class LiveOnApiClient
             callback.onFailure("Endereço da API inválido");
             return;
         }
-        HttpUrl url = base.newBuilder().addQueryParameter("query", query == null ? "" : query).build();
+        HttpUrl url = base.newBuilder()
+            .addQueryParameter("query", query == null ? "" : query)
+            .addQueryParameter("page", String.valueOf(page))
+            .addQueryParameter("limit", String.valueOf(limit))
+            .build();
         execute(new Request.Builder().url(url).get(), ApiModels.MemberListResponse.class, true, callback);
     }
 
@@ -101,6 +191,18 @@ public class LiveOnApiClient
         }
         HttpUrl url = base.newBuilder().addQueryParameter("rsn", rsn).build();
         execute(new Request.Builder().url(url).get(), ApiModels.MemberProfile.class, true, callback);
+    }
+
+    public void getRuneProfile(String rsn, ApiCallback<ApiModels.RuneProfileResponse> callback)
+    {
+        HttpUrl base = baseUrl("/v1/members/runeprofile");
+        if (base == null)
+        {
+            callback.onFailure("Endereço da API inválido");
+            return;
+        }
+        HttpUrl url = base.newBuilder().addQueryParameter("rsn", rsn).build();
+        execute(new Request.Builder().url(url).get(), ApiModels.RuneProfileResponse.class, true, callback);
     }
 
     public void getRankings(String metric, String period, ApiCallback<ApiModels.RankingResponse> callback)
@@ -141,6 +243,26 @@ public class LiveOnApiClient
         execute(new Request.Builder().url(url).post(requestBody), responseType, authenticated, callback);
     }
 
+    private <T> void request(String method, String path, Object body, Class<T> responseType, ApiCallback<T> callback)
+    {
+        HttpUrl url = baseUrl(path);
+        if (url == null)
+        {
+            callback.onFailure("Endereço da API inválido");
+            return;
+        }
+        Request.Builder builder = new Request.Builder().url(url);
+        if ("PUT".equals(method))
+        {
+            builder.put(RequestBody.create(JSON, gson.toJson(body)));
+        }
+        else
+        {
+            builder.delete();
+        }
+        execute(builder, responseType, true, callback);
+    }
+
     private HttpUrl baseUrl(String path)
     {
         HttpUrl root = HttpUrl.parse(config.apiBaseUrl().trim());
@@ -157,6 +279,20 @@ public class LiveOnApiClient
         return root.newBuilder().addPathSegments(cleanPath).build();
     }
 
+    private HttpUrl resolveUrl(String value)
+    {
+        if (value == null || value.trim().isEmpty())
+        {
+            return null;
+        }
+        HttpUrl absolute = HttpUrl.parse(value);
+        if (absolute != null && absolute.host() != null)
+        {
+            return absolute;
+        }
+        return baseUrl(value);
+    }
+
     private <T> void execute(Request.Builder builder, Class<T> responseType, boolean authenticated, ApiCallback<T> callback)
     {
         if (authenticated)
@@ -170,7 +306,7 @@ public class LiveOnApiClient
             builder.header("Authorization", "Bearer " + token);
         }
 
-        builder.header("User-Agent", "Live-On-RuneLite/0.1.0");
+        builder.header("User-Agent", "Live-On-RuneLite/0.2.6");
         httpClient.newCall(builder.build()).enqueue(new Callback()
         {
             @Override
@@ -188,7 +324,31 @@ public class LiveOnApiClient
                     String responseBody = closeable.body() == null ? "" : closeable.body().string();
                     if (!closeable.isSuccessful())
                     {
-                        callback.onFailure("API Live On respondeu " + closeable.code());
+                        String detail = null;
+                        try
+                        {
+                            JsonObject error = gson.fromJson(responseBody, JsonObject.class);
+                            if (error != null && error.has("detail") && error.get("detail").isJsonPrimitive())
+                            {
+                                detail = error.get("detail").getAsString();
+                            }
+                        }
+                        catch (RuntimeException ignored)
+                        {
+                            // Keep the friendly status fallback below.
+                        }
+                        if (closeable.code() == 401)
+                        {
+                            callback.onFailure("Sessão expirada. Entre novamente no jogo");
+                        }
+                        else if (closeable.code() == 502)
+                        {
+                            callback.onFailure("Serviço de dados temporariamente indisponível");
+                        }
+                        else
+                        {
+                            callback.onFailure(detail == null ? "API Live On respondeu " + closeable.code() : detail);
+                        }
                         return;
                     }
                     callback.onSuccess(gson.fromJson(responseBody, responseType));

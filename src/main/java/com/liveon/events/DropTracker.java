@@ -7,6 +7,14 @@ import com.liveon.api.LiveOnApiClient;
 import com.liveon.auth.ClanAccessManager;
 import com.liveon.assets.AssetCatalog;
 import java.util.Collection;
+import java.util.Base64;
+import java.util.concurrent.CompletableFuture;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import javax.imageio.ImageIO;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +23,7 @@ import net.runelite.client.events.NpcLootReceived;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.ItemStack;
 import net.runelite.client.plugins.loottracker.LootReceived;
+import net.runelite.client.ui.DrawManager;
 import net.runelite.http.api.loottracker.LootRecordType;
 
 @Slf4j
@@ -26,6 +35,7 @@ public class DropTracker
     private final LiveOnApiClient apiClient;
     private final ItemManager itemManager;
     private final AssetCatalog assetCatalog;
+    private final DrawManager drawManager;
 
     @Inject
     public DropTracker(
@@ -33,13 +43,15 @@ public class DropTracker
         ClanAccessManager accessManager,
         LiveOnApiClient apiClient,
         ItemManager itemManager,
-        AssetCatalog assetCatalog)
+        AssetCatalog assetCatalog,
+        DrawManager drawManager)
     {
         this.config = config;
         this.accessManager = accessManager;
         this.apiClient = apiClient;
         this.itemManager = itemManager;
         this.assetCatalog = assetCatalog;
+        this.drawManager = drawManager;
     }
 
     public void onNpcLoot(NpcLootReceived event)
@@ -93,7 +105,39 @@ public class DropTracker
             return;
         }
 
-        apiClient.submitDrop(payload, quietCallback("drop"));
+        drawManager.requestNextFrameListener(image -> CompletableFuture.runAsync(() ->
+        {
+            payload.screenshotBase64 = encodeScreenshot(image);
+            apiClient.submitDrop(payload, quietCallback("drop"));
+        }));
+    }
+
+    private String encodeScreenshot(Image image)
+    {
+        try
+        {
+            int originalWidth = image.getWidth(null);
+            int originalHeight = image.getHeight(null);
+            if (originalWidth <= 0 || originalHeight <= 0)
+            {
+                return null;
+            }
+            int width = Math.min(1600, originalWidth);
+            int height = Math.max(1, originalHeight * width / originalWidth);
+            BufferedImage buffered = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = buffered.createGraphics();
+            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            graphics.drawImage(image, 0, 0, width, height, null);
+            graphics.dispose();
+            ByteArrayOutputStream output = new ByteArrayOutputStream();
+            ImageIO.write(buffered, "jpg", output);
+            return Base64.getEncoder().encodeToString(output.toByteArray());
+        }
+        catch (Exception exception)
+        {
+            log.debug("Could not capture Live On drop screenshot", exception);
+            return null;
+        }
     }
 
     private ApiCallback<ApiModels.StatusResponse> quietCallback(String eventName)

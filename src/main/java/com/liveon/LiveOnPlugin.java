@@ -3,6 +3,7 @@ package com.liveon;
 import com.google.inject.Provides;
 import com.liveon.announcements.AnnouncementService;
 import com.liveon.assets.AssetCatalog;
+import com.liveon.assets.HiscoreIcons;
 import com.liveon.auth.ClanAccessManager;
 import com.liveon.events.CollectionLogTracker;
 import com.liveon.events.DropTracker;
@@ -12,6 +13,7 @@ import java.awt.image.BufferedImage;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.ClanChannelChanged;
@@ -27,6 +29,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.loottracker.LootReceived;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.game.ItemManager;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.Text;
 
@@ -43,6 +46,9 @@ public class LiveOnPlugin extends Plugin
 
     @Inject
     private ClientThread clientThread;
+
+    @Inject
+    private Client client;
 
     @Inject
     private LiveOnConfig config;
@@ -68,8 +74,15 @@ public class LiveOnPlugin extends Plugin
     @Inject
     private AssetCatalog assetCatalog;
 
+    @Inject
+    private ItemManager itemManager;
+
+    @Inject
+    private HiscoreIcons hiscoreIcons;
+
     private NavigationButton navigationButton;
     private LiveOnPanel panel;
+    private boolean localLoginActive;
 
     @Provides
     LiveOnConfig provideConfig(ConfigManager configManager)
@@ -81,7 +94,7 @@ public class LiveOnPlugin extends Plugin
     protected void startUp()
     {
         assetCatalog.load();
-        panel = new LiveOnPanel(accessManager, apiClient);
+        panel = new LiveOnPanel(accessManager, apiClient, itemManager, hiscoreIcons);
         BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/liveon-icon.png");
         navigationButton = NavigationButton.builder()
             .tooltip("Live On")
@@ -91,6 +104,12 @@ public class LiveOnPlugin extends Plugin
             .build();
         clientToolbar.addNavigation(navigationButton);
         announcementService.start();
+        if (client.getGameState() == GameState.LOGGED_IN)
+        {
+            localLoginActive = true;
+            announcementService.onLocalLogin();
+            clientThread.invokeLater(accessManager::authorize);
+        }
         log.info("Live On plugin started");
     }
 
@@ -117,10 +136,17 @@ public class LiveOnPlugin extends Plugin
     {
         if (event.getGameState() == GameState.LOGGED_IN)
         {
+            if (!localLoginActive)
+            {
+                localLoginActive = true;
+                announcementService.onLocalLogin();
+            }
             clientThread.invokeLater(accessManager::authorize);
         }
         else if (event.getGameState() == GameState.LOGIN_SCREEN)
         {
+            localLoginActive = false;
+            announcementService.onLocalLogout();
             petTracker.reset();
             accessManager.clear();
         }

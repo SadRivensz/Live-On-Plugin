@@ -16,7 +16,7 @@ Authorization: Bearer <token>
   "clanName": "Live On",
   "clanRank": "member",
   "accessCode": "codigo-da-staff",
-  "pluginVersion": "0.1.0"
+  "pluginVersion": "0.2.6"
 }
 ```
 
@@ -30,7 +30,8 @@ plugin e expira por padrão em 12 horas.
 - `POST /v1/collection-log`
 
 O backend é responsável por persistir e gerar embeds. Não aceite `webhookUrl`
-enviado pelo cliente.
+enviado pelo cliente. Drops podem incluir `screenshotBase64` (PNG/JPEG, até 7 MB
+depois de decodificado); o servidor salva a imagem em `data/screenshots`.
 
 ## Leitura
 
@@ -38,9 +39,31 @@ enviado pelo cliente.
 - `GET /v1/drops?limit=25`
 - `GET /v1/members?query=nome`
 - `GET /v1/members/profile?rsn=nome`
+- `GET /v1/members/runeprofile?rsn=nome`
 - `GET /v1/rankings?metric=xp&period=current`
+- `GET /v1/item-goal`
 
 Métricas: `xp`, `ehp`, `ehb`. Períodos: `current`, `previous`.
+
+O RuneProfile é consultado separadamente do perfil WOM para que Skills,
+Bosses e Atividades apareçam sem aguardar o collection log completo. O endpoint
+retorna `404` quando não há perfil público e usa cache para respeitar o limite
+da API externa.
+
+## Item desejado
+
+- `PUT /v1/item-goal` marca ou substitui o objetivo ativo do usuário.
+- `DELETE /v1/item-goal` remove o objetivo ativo.
+
+```json
+{
+  "itemId": 23956,
+  "itemName": "Enhanced crystal weapon seed"
+}
+```
+
+Quando um drop contém o ID ou nome marcado, o servidor conclui o objetivo,
+calcula o tempo de busca e cria um anúncio `item_goal` para todos os membros.
 
 ## Staff
 

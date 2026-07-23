@@ -29,6 +29,7 @@ public class AssetCatalog
     private List<RankEntry> ranks = Collections.emptyList();
     private List<ItemRule> items = Collections.emptyList();
     private Map<Integer, ItemRule> itemRulesById = Collections.emptyMap();
+    private Map<String, RankEntry> ranksByKey = Collections.emptyMap();
 
     @Inject
     public AssetCatalog(Gson gson)
@@ -47,6 +48,12 @@ public class AssetCatalog
             ruleMap.put(rule.itemId, rule);
         }
         itemRulesById = Collections.unmodifiableMap(ruleMap);
+        Map<String, RankEntry> rankMap = new HashMap<>();
+        for (RankEntry rank : ranks)
+        {
+            rankMap.put(rank.key.toLowerCase(), rank);
+        }
+        ranksByKey = Collections.unmodifiableMap(rankMap);
         log.debug("Loaded Live On catalogs: {} bosses, {} ranks, {} item rules", bosses.size(), ranks.size(), items.size());
     }
 
@@ -68,6 +75,15 @@ public class AssetCatalog
     public ItemRule getItemRule(int itemId)
     {
         return itemRulesById.get(itemId);
+    }
+
+    public RankEntry getRank(String key)
+    {
+        if (key == null)
+        {
+            return null;
+        }
+        return ranksByKey.get(key.toLowerCase().replace(' ', '_'));
     }
 
     private <T> T loadList(String path, Class<T> type)
@@ -111,6 +127,7 @@ public class AssetCatalog
         public String womMetric;
         public List<Integer> npcIds = Collections.emptyList();
         public String icon;
+        public int iconItemId;
     }
 
     public static final class RankEntry
@@ -119,6 +136,7 @@ public class AssetCatalog
         public String displayName;
         public boolean staff;
         public String icon;
+        public int iconIndex = -1;
     }
 
     public static final class ItemRule
