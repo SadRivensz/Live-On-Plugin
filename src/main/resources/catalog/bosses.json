@@ -1,0 +1,9 @@
+{
+  "bosses": [
+    { "key": "theatre_of_blood", "displayName": "Theatre of Blood", "womMetric": "theatre_of_blood", "npcIds": [], "icon": "bosses/theatre-of-blood.png" },
+    { "key": "tombs_of_amascut", "displayName": "Tombs of Amascut", "womMetric": "tombs_of_amascut", "npcIds": [], "icon": "bosses/tombs-of-amascut.png" },
+    { "key": "chambers_of_xeric", "displayName": "Chambers of Xeric", "womMetric": "chambers_of_xeric", "npcIds": [], "icon": "bosses/chambers-of-xeric.png" },
+    { "key": "nex", "displayName": "Nex", "womMetric": "nex", "npcIds": [], "icon": "bosses/nex.png" },
+    { "key": "yama", "displayName": "Yama", "womMetric": "yama", "npcIds": [], "icon": "bosses/yama.png" }
+  ]
+}

@@ -1,0 +1,81 @@
+plugins {
+    id 'java'
+}
+
+def runeLiteVersion = 'latest.release'
+def pluginMainClass = 'com.liveon.LiveOnPluginTest'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        url = uri('https://repo.runelite.net')
+        content {
+            includeGroupByRegex('net\\.runelite.*')
+        }
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly group: 'net.runelite', name: 'client', version: runeLiteVersion
+
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation sourceSets.main.output
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+    testImplementation group: 'net.runelite', name: 'client', version: runeLiteVersion
+    testImplementation group: 'net.runelite', name: 'jshell', version: runeLiteVersion
+}
+
+group = 'com.liveon'
+version = '0.1.0'
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(11)
+}
+
+// Some Windows sandboxed JDKs cannot read main output from the test compiler's
+// classpath. Compiling the small main source set alongside tests keeps the
+// developer launcher reliable and does not affect the plugin jar.
+tasks.named('compileTestJava') {
+    source sourceSets.main.java
+}
+
+tasks.register('run', JavaExec) {
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = pluginMainClass
+    jvmArgs '-ea'
+    args '--developer-mode', '--debug'
+}
+
+tasks.register('shadowJar', Jar) {
+    dependsOn configurations.testRuntimeClasspath
+    manifest {
+        attributes('Main-Class': pluginMainClass, 'Multi-Release': true)
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from sourceSets.main.output
+    from sourceSets.test.output
+    from {
+        configurations.testRuntimeClasspath.collect { file ->
+            file.isDirectory() ? file : zipTree(file)
+        }
+    }
+    exclude 'META-INF/INDEX.LIST'
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude '**/module-info.class'
+    group = BasePlugin.BUILD_GROUP
+    archiveClassifier.set('shadow')
+    archiveFileName.set("${rootProject.name}-${project.version}-all.jar")
+}

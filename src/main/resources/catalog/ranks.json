@@ -1,0 +1,9 @@
+{
+  "ranks": [
+    { "key": "member", "displayName": "Membro", "staff": false, "icon": "ranks/member.png" },
+    { "key": "moderator", "displayName": "Moderador", "staff": true, "icon": "ranks/moderator.png" },
+    { "key": "administrator", "displayName": "Administrador", "staff": true, "icon": "ranks/administrator.png" },
+    { "key": "deputy_owner", "displayName": "Vice-líder", "staff": true, "icon": "ranks/deputy-owner.png" },
+    { "key": "owner", "displayName": "Líder", "staff": true, "icon": "ranks/owner.png" }
+  ]
+}

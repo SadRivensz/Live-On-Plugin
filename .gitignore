@@ -1,0 +1,11 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+.env
+server/.venv/
+__pycache__/
+*.py[cod]
+server/data/
+work/
